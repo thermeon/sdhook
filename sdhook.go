@@ -19,7 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	errorReporting "google.golang.org/api/clouderrorreporting/v1beta1"
-	logging "google.golang.org/api/logging/v2"
+	"google.golang.org/api/logging/v2"
 )
 
 const (
@@ -27,6 +27,21 @@ const (
 	// account credentials.
 	DefaultName = "default"
 )
+
+var defaultMapping = map[logrus.Level]string{
+	logrus.PanicLevel: "EMERGENCY",
+	logrus.FatalLevel: "CRITICAL",
+	logrus.ErrorLevel: "ERROR",
+	logrus.WarnLevel:  "WARNING",
+	logrus.InfoLevel:  "INFO",
+	logrus.DebugLevel: "DEBUG",
+}
+
+// SdLevelMap returns the StackDriver error level corresponding to the Go equivalent
+func SdLevelMap(level logrus.Level) (string, bool) {
+	s, ok := defaultMapping[level]
+	return s, ok
+}
 
 // WaitGroup for the async in-flight requests by sdhook. This is global so that
 // we can wait for all pending requests from all 'StackdriverHook's when
@@ -42,7 +57,8 @@ var exitHandlerRegisterMutex sync.Mutex
 // StackdriverHook provides a logrus hook to Google Stackdriver logging.
 type StackdriverHook struct {
 	// levels are the levels that logrus will hook to.
-	levels []logrus.Level
+	levels  []logrus.Level
+	mapping map[logrus.Level]string
 
 	// projectID is the projectID
 	projectID string
@@ -94,6 +110,8 @@ func New(opts ...Option) (*StackdriverHook, error) {
 
 	sh := &StackdriverHook{
 		levels: logrus.AllLevels,
+		// maps according to https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
+		mapping: defaultMapping,
 	}
 
 	// apply opts
@@ -228,7 +246,7 @@ func (sh *StackdriverHook) sendLogMessageViaAgent(entry *logrus.Entry, labels ma
 	// logging agent. See more at:
 	// https://github.com/GoogleCloudPlatform/fluent-plugin-google-cloud
 	logEntry := map[string]interface{}{
-		"severity":         strings.ToUpper(entry.Level.String()),
+		"severity":         sh.mapping[entry.Level],
 		"timestampSeconds": strconv.FormatInt(entry.Time.Unix(), 10),
 		"timestampNanos":   strconv.FormatInt(entry.Time.UnixNano()-entry.Time.Unix()*1000000000, 10),
 		"message":          entry.Message,
@@ -291,7 +309,7 @@ func (sh *StackdriverHook) sendLogMessageViaAPI(entry *logrus.Entry, labels map[
 		PartialSuccess: sh.partialSuccess,
 		Entries: []*logging.LogEntry{
 			{
-				Severity:    strings.ToUpper(entry.Level.String()),
+				Severity:    sh.mapping[entry.Level],
 				Timestamp:   entry.Time.Format(time.RFC3339),
 				TextPayload: entry.Message,
 				Labels:      labels,
