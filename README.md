@@ -7,7 +7,7 @@ compatible hook for [Google Stackdriver logging](https://cloud.google.com/loggin
 
 Install in the usual Go way:
 ```sh
-go get -u github.com/knq/sdhook
+go get -u github.com/kenshaw/sdhook
 ```
 
 # Usage
@@ -70,4 +70,4 @@ The error log name is either defined by the `ErrorReportingLogName` function or 
 
 This package includes a stacktrace for ERROR and above.
 
-See [GoDoc](https://godoc.org/github.com/knq/sdhook) for a full API listing.
+See [GoDoc](https://godoc.org/github.com/kenshaw/sdhook) for a full API listing.
