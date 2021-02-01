@@ -7,7 +7,7 @@ compatible hook for [Google Stackdriver logging](https://cloud.google.com/loggin
 
 Install in the usual Go way:
 ```sh
-go get -u github.com/kenshaw/sdhook
+go get -u github.com/thermeon/sdhook
 ```
 
 # Usage
