@@ -295,10 +295,7 @@ func GoogleLoggingAgent() Option {
 		// is properly configured by the Google logging agent, which is by default.
 		// See more at:
 		// https://cloud.google.com/error-reporting/docs/setup/ec2
-		sh.agentClient, err = fluent.New(fluent.Config{
-			AsyncConnect: true,
-			MaxRetry:     -1,
-		})
+		sh.agentClient, err = fluent.New(fluent.Config{})
 		if err != nil {
 			return fmt.Errorf("could not find fluentd agent on 127.0.0.1:24224")
 		}
